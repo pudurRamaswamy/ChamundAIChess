@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChamundAiChess</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style id="app-style">
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    
+    .chess-bg {
+      background-image: url('https://cdn.pixabay.com/photo/2017/09/08/20/29/chess-2730034_1280.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+    
+    .container-custom {
+      max-width: 1200px;
+    }
+    
+    .btn-primary {
+      background-color: #4a6da7;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      background-color: #3a5a8f;
+      transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+      background-color: #6c757d;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      transform: translateY(-2px);
+    }
+    
+    .form-control {
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+      padding: 0.375rem 0.75rem;
+    }
+    
+    .chess-pattern {
+      background-image: linear-gradient(45deg, #f0d9b5 25%, transparent 25%),
+                        linear-gradient(-45deg, #f0d9b5 25%, transparent 25%),
+                        linear-gradient(45deg, transparent 75%, #f0d9b5 75%),
+                        linear-gradient(-45deg, transparent 75%, #f0d9b5 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+    
+    .password-strength-meter {
+      height: 5px;
+      margin-top: 5px;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .strength-weak {
+      width: 33%;
+      background-color: #dc3545;
+    }
+    
+    .strength-medium {
+      width: 66%;
+      background-color: #ffc107;
+    }
+    
+    .strength-strong {
+      width: 100%;
+      background-color: #28a745;
+    }
+    
+    .page-transition {
+      transition: all 0.3s ease;
+    }
+    
+    .pgn-editor {
+      font-family: 'Courier New', monospace;
+      line-height: 1.5;
+      min-height: 200px;
+      white-space: pre-wrap;
+    }
+    
+    .top-nav-shadow {
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Modal animation */
+    .modal-overlay {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .modal-overlay.active {
+      opacity: 1;
+    }
+    
+    .modal-content {
+      transform: translateY(-20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-content.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    /* Loader */
+    .loader {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid #fff;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Toast notifications */
+    .toast-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 5px;
+      color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transform: translateX(120%);
+      transition: transform 0.3s ease-out;
+      z-index: 1000;
+    }
+    
+    .toast-notification.show {
+      transform: translateX(0);
+    }
+    
+    .toast-success {
+      background-color: #28a745;
+    }
+    
+    .toast-error {
+      background-color: #dc3545;
+    }
+    
+    .toast-info {
+      background-color: #17a2b8;
+    }
+    
+    /* Custom file input */
+    .custom-file-input {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+    
+    .custom-file-input input[type=file] {
+      position: absolute;
+      top: 0;
+      right: 0;
+      min-width: 100%;
+      min-height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    h1 .fas, h2 .fas, h3 .fas {
+      font-size: 0.9em;
+      vertical-align: baseline;
+      color: inherit;
+    }
+
+    /* Title icons */
+    h1 .fas.fa-chess-king, h2 .fas.fa-chess-king, .text-2xl .fas.fa-chess-king {
+      font-size: 0.8em;
+      transform: scale(0.2, 2);
+      line-height: 1;
+    }
+    
+    h1 .fas.fa-chess-pawn, h2 .fas.fa-chess-pawn, .text-2xl .fas.fa-chess-pawn {
+      font-size: 0.6em;
+      transform: scale(0.2, 1);
+      line-height: 1;
+      margin-left: -0.1em;
+    }
+    
+    /* Navbar icons */
+    .navbar h1 .fas.fa-chess-king {
+      transform: scale(0.2, 2);
+    }
+    
+    .navbar h1 .fas.fa-chess-pawn {
+      transform: scale(0.2, 1);
+      margin-left: -0.1em;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Toast Notifications Container -->
+  <div id="toast-container"></div>
+  
+  <!-- Main Content -->
+  <div id="app" class="min-h-screen">
+    <!-- Login Screen (Initial View) -->
+    <div id="login-screen" class="flex min-h-screen">
+      <div class="w-full md:w-1/2 flex flex-col justify-center items-center p-8">
+        <div class="w-full max-w-md">
+          <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Chamund<i class="fas fa-chess-king"></i><i class="fas fa-chess-pawn text-xs ml-1"></i>Chess</h1>
+            <p class="text-gray-600">Login to your account</p>
+          </div>
+          
+          <form id="login-form" class="space-y-6">
+            <div>
+              <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" id="login-email" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="your.email@example.com" required>
+            </div>
+            
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                <button type="button" id="forgot-password-btn" class="text-sm text-blue-600 hover:text-blue-800">Forgot Password?</button>
+              </div>
+              <input type="password" id="login-password" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="********" required>
+            </div>
+            
+            <div>
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center">
+                <span>Login</span>
+              </button>
+            </div>
+          </form>
+          
+          <div class="mt-6 text-center">
+            <p>Don't have an account? <button id="show-register-btn" class="text-blue-600 hover:text-blue-800 font-medium">Register</button></p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="hidden md:block md:w-1/2 chess-bg">
+        <div class="h-full w-full bg-black bg-opacity-40 flex items-center justify-center p-8">
+          <div class="text-white max-w-lg">
+            <h2 class="text-4xl font-bold mb-4">Welcome to Chamund<i class="fas fa-chess-king"></i><i class="fas fa-chess-pawn text-xs ml-1"></i>Chess</h2>
+            <p class="text-xl">Convert your chess game images to editable PGN format with our advanced AI technology.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Registration Screen (Hidden Initially) -->
+    <div id="register-screen" class="hidden flex min-h-screen">
+      <div class="w-full md:w-1/2 flex flex-col justify-center items-center p-8">
+        <div class="w-full max-w-md">
+          <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Chamund<i class="fas fa-chess-king"></i><i class="fas fa-chess-pawn text-xs ml-1"></i>Chess</h1>
+            <p class="text-gray-600">Join Chamund<i class="fas fa-chess-king"></i><i class="fas fa-chess-pawn text-xs ml-1"></i>Chess today</p>
+          </div>
+          
+          <form id="register-form" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="register-firstname" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <input type="text" id="register-firstname" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="John" required>
+              </div>
+              <div>
+                <label for="register-lastname" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <input type="text" id="register-lastname" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Doe" required>
+              </div>
+            </div>
+            
+            <div>
+              <label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" id="register-email" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="your.email@example.com" required>
+            </div>
+            
+            <div>
+              <label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input type="password" id="register-password" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="********" required>
+              <div class="password-strength-meter mt-2 bg-gray-200"></div>
+              <p id="password-strength-text" class="text-xs text-gray-600 mt-1">Password must be at least 8 characters</p>
+            </div>
+            
+            <div>
+              <label for="register-membership" class="block text-sm font-medium text-gray-700 mb-1">Membership Plan</label>
+              <select id="register-membership" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <option value="">Select a plan</option>
+                <option value="1">1-Year Membership ($99/year)</option>
+                <option value="2">2-Year Membership ($89/year - Save 10%)</option>
+                <option value="3">3-Year Membership ($79/year - Save 20%)</option>
+              </select>
+            </div>
+            
+            <div>
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center">
+                <span>Create Account</span>
+              </button>
+            </div>
+          </form>
+          
+          <div class="mt-6 text-center">
+            <p>Already have an account? <button id="show-login-btn" class="text-blue-600 hover:text-blue-800 font-medium">Login</button></p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="hidden md:block md:w-1/2 chess-bg">
+        <div class="h-full w-full bg-black bg-opacity-40 flex items-center justify-center p-8">
+          <div class="text-white max-w-lg">
+            <h2 class="text-4xl font-bold mb-4">Join Chamund<i class="fas fa-chess-king"></i><i class="fas fa-chess-pawn text-xs ml-1"></i>Chess</h2>
+            <p class="text-xl mb-6">Get access to our advanced PGN image conversion tool and take your chess analysis to the next level.</p>
+            <div class="bg-white bg-opacity-10 p-6 rounded-lg">
+              <h3 class="text-2xl font-semibold mb-4">Membership Benefits</h3>
+              <ul class="space-y-2">
+                <li class="flex items-center"><i class="fas fa-check-circle mr-2 text-green-400"></i> Convert PGN images to editable text</li>
+                <li class="flex items-center"><i class="fas fa-check-circle mr-2 text-green-400"></i> Automatic move correction</li>
+                <li class="flex items-center"><i class="fas fa-check-circle mr-2 text-green-400"></i> Save and manage your games</li>
+                <li class="flex items-center"><i class="fas fa-check-circle mr-2 text-green-400"></i> Access from any device</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Email Verification Screen (Hidden Initially) -->
+    <div id="verification-screen" class="hidden flex min-h-screen items-center justify-center p-8">
+      <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+        <div class="text-center mb-6">
+          <i class="fas fa-envelope-open-text text-blue-600 text-5xl mb-4"></i>
+          <h2 class="text-2xl font-bold">Verify Your Email</h2>
+          <p class="text-gray-600 mt-2">We've sent a verification code to your email</p>
+        </div>
+        
+        <form id="verification-form" class="space-y-6">
+          <div>
+            <label for="verification-code" class="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
+            <input type="text" id="verification-code" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter 6-digit code" required>
+          </div>
+          
+          <div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300">Verify Email</button>
+          </div>
+        </form>
+        
+        <div class="mt-4 text-center">
+          <p class="text-gray-600">Didn't receive the code? <button id="resend-code-btn" class="text-blue-600 hover:text-blue-800">Resend Code</button></p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Forgot Password Screen (Hidden Initially) -->
+    <div id="forgot-password-screen" class="hidden flex min-h-screen items-center justify-center p-8">
+      <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+        <div class="text-center mb-6">
+          <i class="fas fa-lock text-blue-600 text-5xl mb-4"></i>
+          <h2 class="text-2xl font-bold">Reset Your Password</h2>
+          <p class="text-gray-600 mt-2">Enter your email to receive a password reset link</p>
+        </div>
+        
+        <form id="forgot-password-form" class="space-y-6">
+          <div>
+            <label for="forgot-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" id="forgot-email" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="your.email@example.com" required>
+          </div>
+          
+          <div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300">Send Reset Link</button>
+          </div>
+        </form>
+        
+        <div class="mt-6 text-center">
+          <button id="back-to-login-btn" class="text-blue-600 hover:text-blue-800"><i class="fas fa-arrow-left mr-2"></i>Back to Login</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Dashboard (Hidden Initially) -->
+    <div id="dashboard-screen" class="hidden flex flex-col min-h-screen">
+      <!-- Navigation Bar -->
+      <nav class="bg-white top-nav-shadow">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between h-16">
+            <div class="flex-shrink-0 flex items-center">
+              <h1 class="text-2xl font-bold text-blue-600">Chamund<i class="fas fa-chess-king" style="font-size: 1em;"></i><i class="fas fa-chess-pawn text-xs ml-1"></i>Chess</h1>
+            </div>
+            <div class="flex items-center">
+              <button id="profile-dropdown-button" class="ml-3 relative p-1 rounded-full bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <span class="sr-only">Open user menu</span>
+                <i class="fas fa-user text-gray-700 p-1"></i>
+              </button>
+              <div id="profile-dropdown" class="hidden origin-top-right absolute right-4 mt-36 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                <div class="py-1">
+                  <button id="view-profile-btn" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</button>
+                  <button id="logout-btn" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      
+      <!-- Main Content Area -->
+      <div class="flex-grow p-4 md:p-8">
+        <div class="max-w-7xl mx-auto">
+          <!-- Dashboard Header -->
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800">Dashboard</h2>
+            <p class="text-gray-600">Welcome back, <span id="user-firstname">User</span>!</p>
+          </div>
+          
+          <!-- Dashboard Content -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Membership Card -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-xl font-semibold">Your Membership</h3>
+                  <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Active</span>
+                </div>
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-600">Plan</p>
+                    <p class="font-medium" id="membership-plan">2-Year Membership</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">Expiration Date</p>
+                    <p class="font-medium" id="expiration-date">June 15, 2026</p>
+                  </div>
+                </div>
+                <div class="mt-6">
+                  <button id="renew-btn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300">Renew Membership</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Upload PGN Card -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 md:col-span-2">
+              <div class="p-6">
+                <h3 class="text-xl font-semibold mb-4">Upload PGN Image</h3>
+                <p class="text-gray-600 mb-4">Upload a PNG image of your chess game notation to convert it to editable PGN format.</p>
+                <div class="mt-4 flex flex-col space-y-4">
+                  <div class="custom-file-input w-full">
+                    <button id="upload-pgn-btn" class="w-full bg-gray-100 border border-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center">
+                      <i class="fas fa-upload mr-2"></i> Select PNG Image
+                    </button>
+                    <input type="file" id="pgn-image-input" accept=".png" class="hidden">
+                  </div>
+                  <div id="selected-file-container" class="hidden">
+                    <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                          <i class="fas fa-file-image text-blue-500 mr-3 text-xl"></i>
+                          <div>
+                            <p id="selected-filename" class="font-medium">filename.png</p>
+                            <p id="selected-filesize" class="text-sm text-gray-600">256 KB</p>
+                          </div>
+                        </div>
+                        <button id="remove-file-btn" class="text-gray-400 hover:text-gray-600">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="mt-4">
+                      <button id="convert-pgn-btn" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300">Convert to PGN</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Recent Games Card (Will show when user has saved games) -->
+            <div class="hidden bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 md:col-span-3">
+              <div class="p-6">
+                <h3 class="text-xl font-semibold mb-4">Your Recent Games</h3>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">White</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Black</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Result</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      <!-- Empty state - no games yet -->
+                      <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                          <p>You haven't saved any games yet.</p>
+                          <p class="mt-1 text-sm">Convert your first PGN image to get started!</p>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- PGN Conversion/Edit Screen (Hidden Initially) -->
+    <div id="pgn-edit-screen" class="hidden flex flex-col min-h-screen">
+      <!-- Navigation Bar (same as dashboard) -->
+      <nav class="bg-white top-nav-shadow">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between h-16">
+            <div class="flex-shrink-0 flex items-center">
+              <h1 class="text-2xl font-bold text-blue-600">Chamund<i class="fas fa-chess-king" style="font-size: 1em;"></i><i class="fas fa-chess-pawn text-xs ml-1"></i>Chess</h1>
+            </div>
+            <div class="flex items-center">
+              <button id="pgn-back-to-dashboard" class="mr-3 text-gray-700 hover:text-gray-900">
+                <i class="fas fa-arrow-left mr-1"></i> Dashboard
+              </button>
+              <button id="pgn-profile-dropdown-button" class="ml-3 relative p-1 rounded-full bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <span class="sr-only">Open user menu</span>
+                <i class="fas fa-user text-gray-700 p-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+      
+      <!-- PGN Edit Content Area -->
+      <div class="flex-grow p-4 md:p-8">
+        <div class="max-w-7xl mx-auto">
+          <!-- Header -->
+          <div class="mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">PGN Editor</h2>
+            <p class="text-gray-600">Edit and save your converted PGN file</p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- PGN Image Preview -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+              <div class="p-4">
+                <h3 class="text-lg font-semibold mb-3">Original Image</h3>
+                <div class="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded overflow-hidden">
+                  <div id="pgn-image-preview" class="w-full h-full flex items-center justify-center">
+                    <p class="text-gray-500">Image preview</p>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <div class="flex items-center">
+                    <i class="fas fa-file-image text-blue-500 mr-2"></i>
+                    <p id="pgn-filename" class="text-sm text-gray-600 truncate">filename.png</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- PGN Editor -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 md:col-span-2">
+              <div class="p-4">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-lg font-semibold">PGN Text</h3>
+                  <div>
+                    <span id="pgn-status" class="text-sm text-gray-500">Converted text may need review</span>
+                  </div>
+                </div>
+                <textarea id="pgn-editor" class="w-full h-64 p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pgn-editor font-mono" placeholder="PGN content will appear here after conversion"></textarea>
+                <div class="mt-4 flex flex-wrap gap-3">
+                  <button id="save-pgn-btn" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 flex-grow">
+                    <i class="fas fa-save mr-2"></i> Save PGN
+                  </button>
+                  <button id="start-over-btn" class="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-300 flex-grow">
+                    <i class="fas fa-redo mr-2"></i> Start Over
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Profile Screen (Hidden Initially) -->
+    <div id="profile-screen" class="hidden flex flex-col min-h-screen">
+      <!-- Navigation Bar (same as dashboard) -->
+      <nav class="bg-white top-nav-shadow">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between h-16">
+            <div class="flex-shrink-0 flex items-center">
+              <h1 class="text-2xl font-bold text-blue-600">Chamund<i class="fas fa-chess-king" style="font-size: 1em;"></i><i class="fas fa-chess-pawn text-xs ml-1"></i>Chess</h1>
+            </div>
+            <div class="flex items-center">
+              <button id="profile-back-to-dashboard" class="mr-3 text-gray-700 hover:text-gray-900">
+                <i class="fas fa-arrow-left mr-1"></i> Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+      
+      <!-- Profile Content Area -->
+      <div class="flex-grow p-4 md:p-8">
+        <div class="max-w-3xl mx-auto">
+          <!-- Header -->
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800">Profile Settings</h2>
+            <p class="text-gray-600">Manage your account information and preferences</p>
+          </div>
+          
+          <!-- Account Information -->
+          <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 mb-6">
+            <div class="p-6">
+              <h3 class="text-xl font-semibold mb-4">Account Information</h3>
+              <form id="profile-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label for="profile-firstname" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <input type="text" id="profile-firstname" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="John">
+                  </div>
+                  <div>
+                    <label for="profile-lastname" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <input type="text" id="profile-lastname" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="Doe">
+                  </div>
+                </div>
+                <div>
+                  <label for="profile-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input type="email" id="profile-email" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="john.doe@example.com" readonly>
+                </div>
+                <div>
+                  <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          
+          <!-- Change Password -->
+          <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 mb-6">
+            <div class="p-6">
+              <h3 class="text-xl font-semibold mb-4">Change Password</h3>
+              <form id="change-password-form" class="space-y-6">
+                <div>
+                  <label for="current-password" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                  <input type="password" id="current-password" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="********" required>
+                </div>
+                <div>
+                  <label for="new-password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <input type="password" id="new-password" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="********" required>
+                  <div class="password-strength-meter mt-2 bg-gray-200"></div>
+                </div>
+                <div>
+                  <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                  <input type="password" id="confirm-password" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="********" required>
+                </div>
+                <div>
+                  <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300">Update Password</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          
+          <!-- Membership Details -->
+          <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">Membership Details</h3>
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Active</span>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <p class="text-sm text-gray-600">Current Plan</p>
+                  <p class="font-medium" id="profile-membership-plan">2-Year Membership</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-600">Expiration Date</p>
+                  <p class="font-medium" id="profile-expiration-date">June 15, 2026</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-600">Status</p>
+                  <p class="font-medium text-green-600">Active</p>
+                </div>
+              </div>
+              <div class="mt-6">
+                <button id="profile-renew-btn" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300">Renew Membership</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Renew Membership Modal (Hidden Initially) -->
+    <div id="renew-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden modal-overlay">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 modal-content">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold">Renew Membership</h3>
+            <button id="close-renew-modal" class="text-gray-400 hover:text-gray-600">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="mb-6">
+            <p class="text-gray-600">Extend your membership to continue enjoying all features of Chamund<i class="fas fa-chess-king" style="font-size: 1em;"></i><i class="fas fa-chess-pawn text-xs ml-1"></i>Chess.</p>
+          </div>
+          <form id="renew-form">
+            <div class="mb-6">
+              <label for="renew-plan" class="block text-sm font-medium text-gray-700 mb-2">Select Extension Period</label>
+              <select id="renew-plan" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="1">1-Year Extension ($99)</option>
+                <option value="2">2-Year Extension ($178 - Save 10%)</option>
+                <option value="3">3-Year Extension ($237 - Save 20%)</option>
+              </select>
+            </div>
+            <div class="flex flex-col space-y-3">
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300">Proceed to Payment</button>
+              <button type="button" id="cancel-renew" class="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-300">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Loading Overlay (Hidden Initially) -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-xl p-6 flex items-center">
+        <div class="loader mr-3"></div>
+        <p id="loading-text">Processing...</p>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script id="app-script">
+    $(document).ready(function() {
+      // Show active screen initially
+      $('#login-screen').show();
+      
+      // ====== NAVIGATION FUNCTIONS ======
+      
+      // Show login screen
+      function showLogin() {
+        $('.page-transition').hide();
+        $('#login-screen').fadeIn(300);
+      }
+      
+      // Show registration screen
+      function showRegistration() {
+        $('.page-transition').hide();
+        $('#register-screen').fadeIn(300);
+      }
+      
+      // Show dashboard
+      function showDashboard() {
+        $('.page-transition').hide();
+        $('#dashboard-screen').fadeIn(300);
+      }
+      
+      // Show verification screen
+      function showVerification() {
+        $('.page-transition').hide();
+        $('#verification-screen').fadeIn(300);
+      }
+      
+      // Show forgot password screen
+      function showForgotPassword() {
+        $('.page-transition').hide();
+        $('#forgot-password-screen').fadeIn(300);
+      }
+      
+      // Show PGN edit screen
+      function showPgnEditScreen() {
+        $('.page-transition').hide();
+        $('#pgn-edit-screen').fadeIn(300);
+      }
+      
+      // Show profile screen
+      function showProfileScreen() {
+        $('.page-transition').hide();
+        $('#profile-screen').fadeIn(300);
+      }
+      
+      // ====== NAVIGATION EVENT HANDLERS ======
+      
+      // Toggle between login and registration screens
+      $('#show-register-btn').click(function() {
+        showRegistration();
+      });
+      
+      $('#show-login-btn').click(function() {
+        showLogin();
+      });
+      
+      // Show forgot password screen
+      $('#forgot-password-btn').click(function() {
+        showForgotPassword();
+      });
+      
+      // Back to login from forgot password
+      $('#back-to-login-btn').click(function() {
+        showLogin();
+      });
+      
+      // Back to dashboard from PGN edit screen
+      $('#pgn-back-to-dashboard').click(function() {
+        showDashboard();
+      });
+      
+      // Back to dashboard from profile screen
+      $('#profile-back-to-dashboard').click(function() {
+        showDashboard();
+      });
+      
+      // ====== FORM SUBMISSIONS ======
+      
+      // Login form submission
+      $('#login-form').submit(function(e) {
+        e.preventDefault();
+        showLoading('Logging in...');
+        
+        // Simulating API call
+        setTimeout(function() {
+          hideLoading();
+          
+          // Get the entered email to use in the dashboard
+          const firstName = 'John'; // Would come from API response
+          $('#user-firstname').text(firstName);
+          
+          showDashboard();
+        }, 1000);
+      });
+      
+      // Registration form submission
+      $('#register-form').submit(function(e) {
+        e.preventDefault();
+        showLoading('Creating account...');
+        
+        // MAGIC LOOP: SendVerifyEmail - Sends verification code to user email
+        // const response = await fetch('https://magicloops.dev/api/loop/b1685340-f129-4140-98d7-83f9e0a6b707/run', {
+        //   method: 'POST',
+        //   body: JSON.stringify({
+        //     "email": $("#register-email").val(),
+        //     "verificationCode": "123456" // Generate or get from backend
+        //   }),
+        // });
+        
+        showVerification();
+      });
+      
+      // Email verification form submission
+      $('#verification-form').submit(function(e) {
+        e.preventDefault();
+        showLoading('Verifying...');
+        
+        // Simulating API call
+        setTimeout(function() {
+          hideLoading();
+          showDashboard();
+        }, 1000);
+      });
+      
+      // Forgot password form submission
+      $('#forgot-password-form').submit(function(e) {
+        e.preventDefault();
+        showLoading('Sending reset link...');
+        
+        // MAGIC LOOP: PasswordResetEmail - Sends password reset link
+        // const response = await fetch('https://magicloops.dev/api/loop/070b50ed-3101-4806-a47f-dc7adf229ad9/run', {
+        //   method: 'POST',
+        //   body: JSON.stringify({
+        //     "email": $("#forgot-email").val(),
+        //     "resetLink": "https://chamundaichess.com/reset?token=abc123" // Generate token on backend
+        //   }),
+        // });
+        
+        // Simulating API call
+        setTimeout(function() {
+          hideLoading();
+          showToast('Password reset link sent to your email', 'success');
+          showLogin();
+        }, 1000);
+      });
+      
+      // Profile form submission
+      $('#profile-form').submit(function(e) {
+        e.preventDefault();
+        showLoading('Saving changes...');
+        
+        // Simulating API call
+        setTimeout(function() {
+          hideLoading();
+          showToast('Profile updated successfully', 'success');
+        }, 1000);
+      });
+      
+      // Change password form submission
+      $('#change-password-form').submit(function(e) {
+        e.preventDefault();
+        showLoading('Updating password...');
+        
+        // Simulating API call
+        setTimeout(function() {
+          hideLoading();
+          $('#change-password-form')[0].reset();
+          showToast('Password updated successfully', 'success');
+        }, 1000);
+      });
+      
+      // ====== PROFILE DROPDOWN TOGGLE ======
+      
+      // Toggle profile dropdown
+      $('#profile-dropdown-button').click(function() {
+        $('#profile-dropdown').toggleClass('hidden');
+      });
+      
+      // Close dropdown when clicking elsewhere
+      $(document).click(function(e) {
+        if (!$(e.target).closest('#profile-dropdown-button').length && !$(e.target).closest('#profile-dropdown').length) {
+          $('#profile-dropdown').addClass('hidden');
+        }
+      });
+      
+      // Profile dropdown actions
+      $('#view-profile-btn').click(function() {
+        $('#profile-dropdown').addClass('hidden');
+        showProfileScreen();
+      });
+      
+      $('#logout-btn').click(function() {
+        $('#profile-dropdown').addClass('hidden');
+        showLoading('Logging out...');
+        
+        setTimeout(function() {
+          hideLoading();
+          showLogin();
+        }, 1000);
+      });
+      
+      // ====== PGN IMAGE UPLOAD & CONVERSION ======
+      
+      // Trigger file input when button is clicked
+      $('#upload-pgn-btn').click(function() {
+        $('#pgn-image-input').click();
+      });
+      
+      // Handle file selection
+      $('#pgn-image-input').change(function(e) {
+        const file = e.target.files[0];
+        
+        if (file) {
+          // Check if file is PNG
+          if (file.type !== 'image/png') {
+            showToast('Please upload a PNG image', 'error');
+            return;
+          }
+          
+          // Show file info
+          $('#selected-filename').text(file.name);
+          $('#selected-filesize').text(formatFileSize(file.size));
+          $('#selected-file-container').show();
+          
+          // For PGN edit screen
+          $('#pgn-filename').text(file.name);
+        }
+      });
+      
+      // Remove selected file
+      $('#remove-file-btn').click(function() {
+        $('#pgn-image-input').val('');
+        $('#selected-file-container').hide();
+      });
+      
+      // Convert PGN image to text
+      $('#convert-pgn-btn').click(function() {
+        const file = $('#pgn-image-input')[0].files[0];
+        
+        if (!file) {
+          showToast('Please select a file first', 'error');
+          return;
+        }
+        
+        showLoading('Converting image to PGN...');
+        
+        // MAGIC LOOP: Chess PGN OCR - Converts image to PGN text
+        // First upload image to get URL, then:
+        // const response = await fetch('https://magicloops.dev/api/loop/180a31e2-c2d1-4c12-bd42-f812f40159e0/run', {
+        //   method: 'POST',
+        //   body: JSON.stringify({
+        //     "userId": "user-123", // Current user ID from auth
+        //     "imageUrl": "https://uploaded-image-url.com/game.png" // URL from uploaded image
+        //   }),
+        // });
+        // const responseJson = await response.json();
+        // Set PGN data in editor: $('#pgn-editor').val(responseJson.pgnText);
+        
+        // Simulating API call for OCR conversion
+        // ... rest of code ...
+      });
+      
+      // Save PGN
+      $('#save-pgn-btn').click(function() {
+        const pgnText = $('#pgn-editor').val();
+        
+        if (!pgnText) {
+          showToast('PGN content is empty', 'error');
+          return;
+        }
+        
+        showLoading('Saving PGN...');
+        
+        // MAGIC LOOP: Save PGN File - Saves the PGN to user's account
+        // const response = await fetch('https://magicloops.dev/api/loop/save-pgn-file-id-here/run', {
+        //   method: 'POST',
+        //   body: JSON.stringify({
+        //     "userId": "user-123", // Current user ID from auth
+        //     "pgnText": pgnText,
+        //     "fileName": $('#pgn-filename').text() // Or generate a name
+        //   }),
+        // });
+        
+        // Simulating API call
+        // ... rest of code ...
+      });
+      
+      // Start over button
+      $('#start-over-btn').click(function() {
+        showDashboard();
+      });
+      
+      // ====== MEMBERSHIP RENEWAL ======
+      
+      // Note: Membership Expiry Reminder Loop is time-triggered and runs on the server
+      // MAGIC LOOP: Membership Expiry Reminder
+      // This loop runs automatically on a schedule to check for memberships that are about to expire
+      // and sends reminder emails to those users. No client-side call is needed.
+      // Loop endpoint: https://magicloops.dev/api/loop/membership-expiry-reminder-id-here/run
+      
+      // Show renewal modal
+      $('#renew-btn, #profile-renew-btn').click(function() {
+        $('#renew-modal').removeClass('hidden');
+        setTimeout(function() {
+          $('#renew-modal').addClass('active');
+          $('#renew-modal .modal-content').addClass('active');
+        }, 10);
+      });
+      
+      // Close renewal modal
+      $('#close-renew-modal, #cancel-renew').click(function() {
+        $('#renew-modal .modal-content').removeClass('active');
+        $('#renew-modal').removeClass('active');
+        setTimeout(function() {
+          $('#renew-modal').addClass('hidden');
+        }, 300);
+      });
+      
+      // Renew form submission
+      $('#renew-form').submit(function(e) {
+        e.preventDefault();
+        
+        // Close modal
+        $('#renew-modal .modal-content').removeClass('active');
+        $('#renew-modal').removeClass('active');
+        setTimeout(function() {
+          $('#renew-modal').addClass('hidden');
+        }, 300);
+        
+        showLoading('Processing renewal...');
+        
+        // Simulating API call
+        setTimeout(function() {
+          hideLoading();
+          
+          // Update expiration date
+          const currentExpiration = new Date('2026-06-15');
+          const years = parseInt($('#renew-plan').val());
+          currentExpiration.setFullYear(currentExpiration.getFullYear() + years);
+          
+          const newExpirationText = currentExpiration.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          
+          $('#expiration-date, #profile-expiration-date').text(newExpirationText);
+          
+          showToast('Membership renewed successfully', 'success');
+        }, 1500);
+      });
+      
+      // ====== PASSWORD STRENGTH METER ======
+      
+      $('#register-password, #new-password').on('input', function() {
+        const password = $(this).val();
+        updatePasswordStrength(password, $(this).siblings('.password-strength-meter'));
+      });
+      
+      // ====== UTILITY FUNCTIONS ======
+      
+      // Show loading overlay
+      function showLoading(message = 'Processing...') {
+        $('#loading-text').text(message);
+        $('#loading-overlay').removeClass('hidden');
+      }
+      
+      // Hide loading overlay
+      function hideLoading() {
+        $('#loading-overlay').addClass('hidden');
+      }
+      
+      // Format file size
+      function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        else return (bytes / 1048576).toFixed(1) + ' MB';
+      }
+      
+      // Update password strength meter
+      function updatePasswordStrength(password, meterElement) {
+        let strength = 0;
+        const strengthText = meterElement.siblings('#password-strength-text');
+        
+        if (password.length >= 8) strength += 1;
+        if (/[A-Z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+        
+        meterElement.removeClass('strength-weak strength-medium strength-strong');
+        
+        if (password.length === 0) {
+          strengthText.text('Password must be at least 8 characters');
+          meterElement.width(0);
+        } else if (strength === 1) {
+          meterElement.addClass('strength-weak');
+          strengthText.text('Password is weak');
+        } else if (strength === 2 || strength === 3) {
+          meterElement.addClass('strength-medium');
+          strengthText.text('Password is medium strength');
+        } else {
+          meterElement.addClass('strength-strong');
+          strengthText.text('Password is strong');
+        }
+      }
+      
+      // Show toast notification
+      function showToast(message, type = 'info') {
+        const toastId = 'toast-' + Date.now();
+        const toastClass = type === 'success' ? 'toast-success' : 
+                          type === 'error' ? 'toast-error' : 'toast-info';
+        
+        const toastHTML = `
+          <div id="${toastId}" class="toast-notification ${toastClass}">
+            <div class="flex items-center">
+              <span>${message}</span>
+            </div>
+          </div>
+        `;
+        
+        $('#toast-container').append(toastHTML);
+        
+        setTimeout(() => {
+          $(`#${toastId}`).addClass('show');
+        }, 100);
+        
+        setTimeout(() => {
+          $(`#${toastId}`).removeClass('show');
+          setTimeout(() => {
+            $(`#${toastId}`).remove();
+          }, 300);
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>
